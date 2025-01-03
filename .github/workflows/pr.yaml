@@ -1,5 +1,5 @@
 name: PR
-run-name: ${{ github.event_name }}
+run-name: ${{ github.event.action }}
 on:
   pull_request:
     branches:
