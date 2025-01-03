@@ -21,7 +21,8 @@ jobs:
         with:
           fetch-depth: '0'
       - run: echo PR opened or synched!
-      - run: echo ${{ github.event }}
+      - run: echo ${{ github.event_path }}
+      - run: cat ${{ github.event_path }}
   closed:
     #if: ${{ github. == 'closed' }}
     runs-on: ubuntu-latest
