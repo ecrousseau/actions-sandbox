@@ -1,0 +1,26 @@
+name: Expose/Hide
+on:
+  workflow_dispatch:
+    inputs:
+      expose:
+        type: choice
+        required: true
+        description: Expose or hide
+        options:
+          - expose
+          - hide
+        default: hide
+
+jobs:
+  expose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - name: if_expose
+        if: ${{ github.event.inputs.expose == 'expose' }}
+        run: echo "expose!"
+      - name: if_hide
+        if: ${{ github.event.inputs.expose == 'hide' }}
+        run: echo "hide!"
