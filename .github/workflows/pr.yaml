@@ -29,10 +29,21 @@ jobs:
       - run: echo PR opened or synched!
       - run: echo ${{ github.event_path }}
       - run: cat ${{ github.event_path }}
-      - run: |-
+      - id: create_comment
+        run: |-
           curl -sS -X POST ${{ github.event.pull_request._links.comments.href }} \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            -d "{\"body\":\"Vercel Deployments\n| Name | Build | Preview |\n| --- | --- | --- | --- |\n| blue-skies | https://vercel.com/thirdfort/blue-skies/6WAzkahLWX3X493h6N6ENMTNJCQn | Missing link |\n| internal-developer-docs | https://vercel.com/thirdfort/internal-developer-docs/F5wU9WMARjrvgGfPqx6yeMGUN557 | Missing link |\"}"
+            -d "{\"body\":\"Vercel Deployments\n| Name | Build | Preview |\n| --- | --- | --- | --- |\n| blue-skies | https://vercel.com/thirdfort/blue-skies/6WAzkahLWX3X493h6N6ENMTNJCQn | Missing link |\n| internal-developer-docs | https://vercel.com/thirdfort/internal-developer-docs/F5wU9WMARjrvgGfPqx6yeMGUN557 | Missing link |\"}" \
+            -o comment.json
+          cat comment.json
+          echo "comment_url=$(jq -r '.url' comment.json)" | tee -a $GITHUB_OUTPUT
+      - id: update_comment
+        run: |-
+          curl -sS -X PATCH ${{ steps.create_comment.outputs.comment_url }} \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -d "{\"body\":\"**Updated** Vercel Deployments\n| Name | Build | Preview |\n| --- | --- | --- | --- |\n| blue-skies | https://vercel.com/thirdfort/blue-skies/6WAzkahLWX3X493h6N6ENMTNJCQn | Missing link |\n| internal-developer-docs | https://vercel.com/thirdfort/internal-developer-docs/F5wU9WMARjrvgGfPqx6yeMGUN557 | Missing link |\"}" \
+            -o comment_update.json
+            cat comment_update.json
   closed:
     if: ${{ github.event.action == 'closed' }}
     runs-on: ubuntu-latest
