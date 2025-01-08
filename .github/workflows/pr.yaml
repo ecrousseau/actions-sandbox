@@ -14,6 +14,7 @@ permissions:
   actions: read
   contents: read
   id-token: write
+  issues: write
 
 concurrency: ${{ github.head_ref }}
 
@@ -29,7 +30,7 @@ jobs:
       - run: echo ${{ github.event_path }}
       - run: cat ${{ github.event_path }}
       - run: |-
-          curl -sS -X POST "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+          curl -sS -X POST ${{ github.event.pull_request._links.comments }} \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -d "{\"body\":\"test\"}"
   closed:
