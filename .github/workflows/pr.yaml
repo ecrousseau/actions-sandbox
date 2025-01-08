@@ -1,5 +1,5 @@
 name: PR
-run-name: ${{ github.event.action }}
+run-name: PR ${{ github.event.number }} ${{ github.event.action }}
 on:
   pull_request:
     branches:
@@ -10,11 +10,16 @@ on:
       - synchronize
       - closed
 
+permissions:
+  actions: read
+  contents: read
+  id-token: write
+
 concurrency: ${{ github.head_ref }}
 
 jobs:
   opened:
-    #if: ${{ github. == 'pull_request' }}
+    if: ${{ github.event.action != 'closed' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,8 +28,12 @@ jobs:
       - run: echo PR opened or synched!
       - run: echo ${{ github.event_path }}
       - run: cat ${{ github.event_path }}
+      - run: |-
+          curl -sS -X POST "https://api.github.com/repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -d "{\"body\":\"test\"}"
   closed:
-    #if: ${{ github. == 'closed' }}
+    if: ${{ github.event.action == 'closed' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
