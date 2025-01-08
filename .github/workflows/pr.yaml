@@ -1,5 +1,5 @@
 name: PR
-run-name: PR ${{ github.event.number }} ${{ github.event.action }}
+run-name: 'PR #${{ github.event.number }}: ${{ github.event.pull_request.title }}'
 on:
   pull_request:
     branches:
@@ -30,7 +30,7 @@ jobs:
       - run: echo ${{ github.event_path }}
       - run: cat ${{ github.event_path }}
       - run: |-
-          curl -sS -X POST ${{ github.event.pull_request._links.comments }} \
+          curl -sS -X POST ${{ github.event.pull_request._links.comments.href }} \
             -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             -d "{\"body\":\"test\"}"
   closed:
