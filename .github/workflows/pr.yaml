@@ -45,16 +45,16 @@ jobs:
       #      -o comment_update.json
       #      cat comment_update.json
       - id: projects
-        run: echo 'projects=["red", "green", "blue"]' >> "$GITHUB_OUTPUT"
+        run: echo 'projects=["red","green","blue"]' | tee -a "$GITHUB_OUTPUT"
     outputs:
       projects: ${{ steps.projects.outputs.projects }}
-  multijob:
+  multiball:
     needs: opened
     runs-on: ubuntu-latest
     strategy:
       matrix:
         platform: ["amd64", "arm64"]
-        project: ${{ needs.opened.outputs.projects }}
+        project: ${{ fromJSON(needs.opened.outputs.projects) }}
     steps:
       - uses: actions/checkout@v4
         with:
