@@ -1,5 +1,4 @@
 name: PR
-run-name: '${{ github.event.pull_request.title }}: ${{ github.event.action }}'
 on:
   pull_request:
     branches:
@@ -26,30 +25,28 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: '0'
-      - run: echo PR opened or synched!
-      - run: echo ${{ github.event_path }}
-      - run: cat ${{ github.event_path }}
-      #- id: create_comment
-      #  run: |-
-      #    curl -sS -X POST ${{ github.event.pull_request._links.comments.href }} \
-      #      -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-      #      -d "{\"body\":\"Vercel Deployments\n| Name | Build | Preview |\n| --- | --- | --- | --- |\n| blue-skies | https://vercel.com/thirdfort/blue-skies/6WAzkahLWX3X493h6N6ENMTNJCQn | Missing link |\n| internal-developer-docs | https://vercel.com/thirdfort/internal-developer-docs/F5wU9WMARjrvgGfPqx6yeMGUN557 | Missing link |\"}" \
-      #      -o comment.json
-      #    cat comment.json
-      #    echo "comment_url=$(jq -r '.url' comment.json)" | tee -a $GITHUB_OUTPUT
-      #- id: update_comment
-      #  run: |-
-      #    curl -sS -X PATCH ${{ steps.create_comment.outputs.comment_url }} \
-      #      -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-      #      -d "{\"body\":\"**Updated** Vercel Deployments\n| Name | Build | Preview |\n| --- | --- | --- | --- |\n| blue-skies | https://vercel.com/thirdfort/blue-skies/6WAzkahLWX3X493h6N6ENMTNJCQn | Missing link |\n| internal-developer-docs | https://vercel.com/thirdfort/internal-developer-docs/F5wU9WMARjrvgGfPqx6yeMGUN557 | Missing link |\"}" \
-      #      -o comment_update.json
-      #      cat comment_update.json
       - id: projects
-        run: echo 'projects=["red","green","blue"]' | tee -a "$GITHUB_OUTPUT"
+        run: echo 'projects=["green","blue"]' | tee -a "$GITHUB_OUTPUT"
     outputs:
       projects: ${{ steps.projects.outputs.projects }}
-  multiball:
-    needs: opened
+  multiball_one:
+    runs-on: ubuntu-latest
+    needs:
+      - opened
+    if: ${{ needs.opened.outputs.projects != '[]' }}
+    strategy:
+      matrix:
+        platform: ["amd64", "arm64"]
+        project: ${{ fromJSON(needs.opened.outputs.projects) }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - run: echo "multiball one"
+  multiball_two:
+    needs:
+      - opened
+    if: ${{ needs.opened.outputs.projects != '[]' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -59,7 +56,28 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: '0'
-      - run: echo PR opened or synched!
+      - run: echo "multiball two"
+  merge:
+    needs:
+      - multiball_one
+      - multiball_two
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - run: echo "merge if necessary"
+  final:
+    needs:
+      - merge
+    #Run even if merge was skipped
+    if: ${{ !failure() && !cancelled() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - run: echo "final job woo"
   closed:
     if: ${{ github.event.action == 'closed' }}
     runs-on: ubuntu-latest
