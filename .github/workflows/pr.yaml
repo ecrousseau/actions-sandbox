@@ -26,7 +26,7 @@ jobs:
         with:
           fetch-depth: '0'
       - run: |
-          comment="[Temporal Task Queue](https://cloud.temporal.io/namespaces/nonproduction-client.juyno/workflows?query=%60TaskQueue%60+STARTS_WITH+%22$namespace%22)"
+          comment="[Temfqfeqgeqgegegporal Task Queue](https://cloud.temporal.io/namespaces/nonproduction-client.juyno/workflows?query=%60TaskQueue%60+STARTS_WITH+%22$namespace%22)"
           gh pr comment ${{ github.event.number }} --edit-last --body "$comment" || gh pr comment ${{ github.event.number }} --body "$comment"
         env:
           GH_TOKEN: ${{ github.token }}
