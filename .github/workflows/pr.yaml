@@ -27,7 +27,8 @@ jobs:
           fetch-depth: '0'
       - run: |
           gh pr comment ${{ github.event.number }} --edit-last --body "[Temporal Task Queue](https://cloud.temporal.io/namespaces/nonproduction-client.juyno/workflows?query=%60TaskQueue%60+STARTS_WITH+%22$namespace%22)"
-
+        env:
+          GH_TOKEN: ${{ github.token }}
   #    - id: projects
   #      run: echo 'projects=[]' | tee -a "$GITHUB_OUTPUT"
   #  outputs:
