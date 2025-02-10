@@ -13,14 +13,14 @@ on:
 concurrency: ${{ github.head_ref }}
 
 jobs:
-  foo:
-    environment: bar
-    runs-on: ubuntu-latest
-    steps:
-      - run: echo ${{ github.event_path }}
-      - run: cat ${{ github.event_path }}
-      - run: echo "environment=${{ github.job.environment }}"
-      - run: echo "environment=${{ github.jobs.foo.environment }}"
+  bar:
+    uses: ./.github/workflows/reusable.yml
+    with:
+      environment: bar
+  baz:
+    uses: ./.github/workflows/reusable.yml
+    with:
+      environment: baz
 #  opened:
 #    #if: ${{ github. == 'pull_request' }}
 #    runs-on: ubuntu-latest
