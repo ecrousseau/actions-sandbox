@@ -19,8 +19,8 @@ jobs:
     steps:
       - run: echo ${{ github.event_path }}
       - run: cat ${{ github.event_path }}
-      - run: echo ${{ github.job.environment }}
-      - run: echo ${{ github.jobs.foo.environment }}
+      - run: echo "environment=${{ github.job.environment }}"
+      - run: echo "environment=${{ github.jobs.foo.environment }}"
 #  opened:
 #    #if: ${{ github. == 'pull_request' }}
 #    runs-on: ubuntu-latest
