@@ -20,7 +20,7 @@ jobs:
           fetch-depth: '0'
       - name: if_expose
         if: ${{ github.event.inputs.expose == 'expose' }}
-        run: echo "expose!"
+        run: echo "expose!?"
       - name: if_hide
         if: ${{ github.event.inputs.expose == 'hide' }}
-        run: echo "hide!"
+        run: echo "hide!?"
