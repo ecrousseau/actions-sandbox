@@ -9,6 +9,15 @@ on:
       - synchronize
       - closed
   workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number for context"
+        required: false
+        type: string
+      head_ref:
+        description: "Branch name for checkout"
+        required: false
+        type: string
 
 permissions:
   actions: read
@@ -26,3 +35,4 @@ jobs:
         run: |
           echo "head_ref: ${{ github.head_ref }}"
           echo "ref: ${{ github.ref }}"
+          echo "pr_number: ??"

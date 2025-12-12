@@ -179,7 +179,11 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'pr.yml',
-              ref: '${{ steps.get_pr.outputs.head_ref }}'
+              ref: '${{ steps.get_pr.outputs.head_ref }}',
+              inputs: {
+                head_ref: '${{ steps.get_pr.outputs.head_ref }}',
+                pr_number: '${{ steps.get_pr.outputs.number }}',
+              },
             });
       - name: Update status comment with success
         run: |
