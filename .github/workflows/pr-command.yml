@@ -128,15 +128,15 @@ jobs:
           full_label="env:truelayer-prod"
           if [[ "$mode" == "prod" ]]; then
             echo "Adding label $full_label to PR #${{ steps.get_pr.outputs.number }}"
-            gh pr edit ${{ steps.get_pr.outputs.number }} --add-label "$full_label"
+            if gh pr edit ${{ steps.get_pr.outputs.number }} --add-label "$full_label"; then
+              echo "requires_deployment=true" >> $GITHUB_OUTPUT
+            fi
           else
             echo "Removing label $full_label from PR #${{ steps.get_pr.outputs.number }}"
-            gh pr edit ${{ steps.get_pr.outputs.number }} --remove-label "$full_label"
+            if gh pr edit ${{ steps.get_pr.outputs.number }} --remove-label "$full_label"; then
+              echo "requires_deployment=true" >> $GITHUB_OUTPUT
+            fi
           fi
-
-          use_truelayer_prod=$( [[ "$mode" == "prod" ]] && echo "true" || echo "false" )
-          echo "use_truelayer_prod=$use_truelayer_prod" >> $GITHUB_OUTPUT
-          echo "requires_deployment=true" >> $GITHUB_OUTPUT
 
           # Set emoji and message based on mode
           if [[ "$mode" == "prod" ]]; then
