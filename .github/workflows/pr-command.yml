@@ -218,6 +218,6 @@ jobs:
         if: always() && steps.ack_command.outputs.reaction_id
         run: |
           gh api --method DELETE \
-            /repos/${{ github.repository }}/reactions/${{ steps.ack_command.outputs.reaction_id }}
+            /repos/${{ github.repository }}/issues/comments/${{ steps.ack_command.outputs.comment_id }}/reactions/${{ steps.ack_command.outputs.reaction_id }}
         env:
           GH_TOKEN: ${{ github.token }}
