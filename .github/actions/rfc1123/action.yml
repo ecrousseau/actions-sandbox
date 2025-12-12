@@ -1,0 +1,21 @@
+name: To RFC1123
+description: Convert input to a name compatible with RFC 1123
+inputs:
+  input:
+    description: String to convert
+    required: true
+outputs:
+  output:
+    description: Converted string
+    value: ${{ steps.convert.outputs.output }}
+runs:
+  using: composite
+  steps:
+    - name: Convert string
+      id: convert
+      shell: bash
+      run: |-
+        output=$(echo -n "$input" | perl -pe 's/[^A-Za-z0-9-]/-/g' | perl -ne 'print lc' | perl -ne 'print substr($_,0,50)' | perl -pe 's/[^a-z0-9]+?$//')
+        echo "output=$output" | tee -a $GITHUB_OUTPUT
+      env:
+        input: ${{ inputs.input }}
