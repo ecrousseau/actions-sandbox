@@ -9,11 +9,6 @@ on:
       - synchronize
       - closed
   workflow_dispatch:
-    inputs:
-      pr_number:
-        description: "PR number"
-        required: true
-        type: number
 
 permissions:
   actions: read
@@ -21,7 +16,7 @@ permissions:
   id-token: write
   pull-requests: write
 
-#concurrency: ${{ github.head_ref || github.ref }}
+concurrency: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   main:
