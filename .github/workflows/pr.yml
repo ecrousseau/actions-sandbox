@@ -21,7 +21,7 @@ permissions:
   id-token: write
   pull-requests: write
 
-concurrency: ${{ github.head_ref || github.ref }}
+#concurrency: ${{ github.head_ref || github.ref }}
 
 jobs:
   main:
@@ -29,9 +29,5 @@ jobs:
     steps:
       - name: Debug
         run: |
-          echo "PR number: ${{ github.event.number }}"
-          echo "PR title: ${{ github.event.pull_request.title }}"
-          echo "PR body: ${{ github.event.pull_request.body }}"
-          echo "PR author: ${{ github.event.pull_request.user.login }}"
-          echo "PR head: ${{ github.event.pull_request.head.ref }}"
-          echo "PR base: ${{ github.event.pull_request.base.ref }}"
+          echo "head_ref: ${{ github.head_ref }}"
+          echo "ref: ${{ github.ref }}"
