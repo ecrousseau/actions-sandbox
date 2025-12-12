@@ -214,7 +214,7 @@ jobs:
         if: success() && steps.status_comment.outputs.comment_id
         run: |
           message="${{ steps.process_truelayer.outputs.message || steps.process_reset.outputs.message }}"
-          body="✅ Executed command '$command_name'.
+          body="✅ Executed command '${{ steps.parse_command.outputs.command_name }}'.
 
           $message
 
@@ -228,8 +228,7 @@ jobs:
       - name: Update status comment with failure
         if: failure() && steps.status_comment.outputs.comment_id
         run: |
-          command_name="${{ steps.parse_command.outputs.command_name }}"
-          body="❌ Failed to execute command '$command_name'. Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
+          body="❌ Failed to execute command '${{ steps.parse_command.outputs.command_name }}'. Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
 
           *Requested by @${REQUESTER}*"
           gh api --method PATCH \
