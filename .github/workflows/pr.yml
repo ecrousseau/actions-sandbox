@@ -9,15 +9,15 @@ on:
       - synchronize
       - closed
   workflow_dispatch:
-    inputs:
-      pr_number:
-        description: "PR number for context"
-        required: false
-        type: string
-      head_ref:
-        description: "Branch name for checkout"
-        required: false
-        type: string
+    #inputs:
+    #  pr_number:
+    #    description: "PR number for context"
+    #    required: false
+    #    type: string
+    #  head_ref:
+    #    description: "Branch name for checkout"
+    #    required: false
+    #    type: string
 
 permissions:
   actions: read
@@ -25,7 +25,7 @@ permissions:
   id-token: write
   pull-requests: write
 
-concurrency: ${{ github.head_ref || github.ref_name }}
+concurrency: ${{ github.ref }}
 
 jobs:
   main:
@@ -33,7 +33,7 @@ jobs:
     steps:
       - name: Debug
         run: |
-          echo "head_ref: ${{ github.head_ref || github.event.inputs.head_ref }}"
           echo "ref: ${{ github.ref }}"
-          echo "pr_number: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
           echo "ref_name: ${{ github.ref_name }}"
+          echo "head_ref: ${{ github.head_ref }}"
+          echo "pr_number: ${{ github.event.pull_request.number }}"
