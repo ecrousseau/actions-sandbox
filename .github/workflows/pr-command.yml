@@ -29,7 +29,7 @@ jobs:
        (github.event.comment.author_association == 'OWNER' ||
         github.event.comment.author_association == 'MEMBER' ||
         github.event.comment.author_association == 'COLLABORATOR'))
-    runs-on: [self-hosted, nonproduction]
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - name: Checkout
