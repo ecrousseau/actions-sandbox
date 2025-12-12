@@ -48,6 +48,7 @@ jobs:
               pull_number: context.eventName === 'workflow_dispatch' ? context.payload.inputs.pr_number : context.issue.number,
             });
             core.setOutput('head_ref', pr.data.head.ref);
+            core.setOutput('head_sha', pr.data.head.sha);
             core.setOutput('number', pr.data.number);
       - name: Get namespace label
         id: get_label
@@ -179,7 +180,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               workflow_id: 'pr.yml',
-              ref: '${{ steps.get_pr.outputs.head_ref }}',
+              ref: '${{ steps.get_pr.outputs.head_sha }}',
               inputs: {
                 pr_number: '${{ steps.get_pr.outputs.number }}',
               }
