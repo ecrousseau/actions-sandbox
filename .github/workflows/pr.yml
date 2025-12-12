@@ -33,6 +33,7 @@ jobs:
     steps:
       - name: Debug
         run: |
-          echo "head_ref: ${{ github.head_ref }}"
+          echo "head_ref: ${{ github.head_ref || github.event.inputs.head_ref }}"
           echo "ref: ${{ github.ref }}"
-          echo "pr_number: ??"
+          echo "pr_number: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}"
+          echo "ref_name: ${{ github.ref_name }}"
