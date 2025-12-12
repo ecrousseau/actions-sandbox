@@ -21,7 +21,7 @@ permissions:
   id-token: write
   pull-requests: write
 
-concurrency: ${{ github.head_ref }}
+concurrency: ${{ github.head_ref || github.ref }}
 
 jobs:
   main:
