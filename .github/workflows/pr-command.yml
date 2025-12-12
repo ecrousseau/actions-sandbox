@@ -87,23 +87,37 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           COMMAND_INPUT: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.command || github.event.comment.body }}
-      - name: Acknowledge command comment
-        if: github.event_name == 'issue_comment'
+      - name: Acknowledge command
+        id: ack_command
         run: |
-          gh api --method POST \
-            /repos/${{ github.repository }}/issues/comments/${COMMENT_ID}/reactions \
-            -f content="eyes"
+          if [[ -n "$INCOMING_COMMENT_ID" ]]; then
+            comment_id=$INCOMING_COMMENT_ID
+            gh api --method POST \
+              /repos/${{ github.repository }}/issues/comments/${comment_id}/reactions \
+              -f content="eyes"
+          else
+            comment_url=$(gh pr comment ${{ steps.get_pr.outputs.number }} --body "$full_message" 2>&1)
+            if [[ $? -ne 0 ]]; then
+              echo "Failed to post comment: $comment_url"
+              exit 1
+            fi
+            comment_id=$(echo "$comment_url" | grep -oE '[0-9]+$')
+            if [[ -z "$comment_id" ]]; then
+              echo "Failed to extract comment ID from: $comment_url"
+              exit 1
+            fi
+          fi
+          echo "comment_id=$comment_id" >> $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ github.token }}
-          COMMENT_ID: ${{ github.event.comment.id || '' }}
+          INCOMING_COMMENT_ID: ${{ github.event.comment.id || '' }}
       - name: Process reset command
         if: steps.parse_command.outputs.command_name == 'reset'
         id: process_reset
         timeout-minutes: 5
         run: |
           echo "Would've terminated pods deleted databases etc."
-          echo "emoji=💥" >> $GITHUB_OUTPUT
-          echo "message=PR environment reset" >> $GITHUB_OUTPUT
+          echo "message=💥 PR environment reset" >> $GITHUB_OUTPUT
           echo "requires_deployment=true" >> $GITHUB_OUTPUT
         env:
           namespace: ${{ steps.get_label.outputs.output }}
@@ -122,7 +136,6 @@ jobs:
             exit 1
           fi
 
-          # Manage truelayer label
           # prod mode: add env:truelayer-prod label
           # sandbox mode: remove env:truelayer-prod label
           full_label="env:truelayer-prod"
@@ -138,22 +151,18 @@ jobs:
             fi
           fi
 
-          # Set emoji and message based on mode
           if [[ "$mode" == "prod" ]]; then
-            echo "emoji=🚀" >> $GITHUB_OUTPUT
-            echo "message=TrueLayer **PRODUCTION** mode" >> $GITHUB_OUTPUT
+            echo "message=🚀 TrueLayer **PRODUCTION** mode" >> $GITHUB_OUTPUT
           else
-            echo "emoji=🐛" >> $GITHUB_OUTPUT
-            echo "message=TrueLayer **SANDBOX** mode" >> $GITHUB_OUTPUT
+            echo "message=🐛 TrueLayer **SANDBOX** mode" >> $GITHUB_OUTPUT
           fi
         env:
           GH_TOKEN: ${{ github.token }}
       - name: Reject unknown command
         if: steps.parse_command.outputs.command_name != 'truelayer' && steps.parse_command.outputs.command_name != 'reset'
+        id: reject_unknown
         run: |
-          message="❌ Unknown command: ${{ steps.parse_command.outputs.command_name }}"
-          echo $message
-          gh pr comment ${{ steps.get_pr.outputs.number }} --body "$message" 2>&1
+          echo "❌ Unknown command: ${{ steps.parse_command.outputs.command_name }}"
           exit 1
         env:
           GH_TOKEN: ${{ github.token }}
@@ -171,71 +180,36 @@ jobs:
                 pr_number: '${{ steps.get_pr.outputs.number }}'
               }
             });
-      - name: Post status comment
-        id: status_comment
+      - name: Update status comment with success
         run: |
-          emoji="${{ steps.process_truelayer.outputs.emoji || steps.process_reset.outputs.emoji }}"
-          message="${{ steps.process_truelayer.outputs.message || steps.process_reset.outputs.message }}"
-          requires_deployment="${{ steps.process_truelayer.outputs.requires_deployment || steps.process_reset.outputs.requires_deployment }}"
+          body="✅ Executed command ${{ steps.parse_command.outputs.command_name }} ${{ steps.parse_command.outputs.args }}
 
-          full_message="$emoji $message"
+          ${{ steps.process_truelayer.outputs.message || steps.process_reset.outputs.message }}"
 
           if [[ "$requires_deployment" == "true" ]]; then
-            full_message="$full_message
+            body="$body
 
           A new run of the PR workflow has been started."
           fi
 
-          comment_url=$(gh pr comment ${{ steps.get_pr.outputs.number }} --body "$full_message" 2>&1)
-          if [[ $? -ne 0 ]]; then
-            echo "Failed to post comment: $comment_url"
-            exit 1
-          fi
+          body="$body
 
-          comment_id=$(echo "$comment_url" | grep -oE '[0-9]+$')
-          if [[ -z "$comment_id" ]]; then
-            echo "Failed to extract comment ID from: $comment_url"
-            exit 1
-          fi
-
-          echo "comment_id=$comment_id" >> $GITHUB_OUTPUT
-        env:
-          GH_TOKEN: ${{ github.token }}
-      - name: Delete command comment
-        if: always() && github.event_name == 'issue_comment'
-        run: |
-          gh api --method DELETE \
-            /repos/${{ github.repository }}/issues/comments/${COMMENT_ID} \
-            2>/dev/null || echo "Command comment already deleted or not found"
-        env:
-          GH_TOKEN: ${{ github.token }}
-          COMMENT_ID: ${{ github.event.comment.id || '' }}
-      - name: Update status comment with success
-        if: success() && steps.status_comment.outputs.comment_id
-        run: |
-          message="${{ steps.process_truelayer.outputs.message || steps.process_reset.outputs.message }}"
-          body="✅ Executed command ${{ steps.parse_command.outputs.command_name }} ${{ steps.parse_command.outputs.args }}
-
-          $message
-
-          *Requested by @${REQUESTER}*"
+          Requested by *${{ github.event_name == 'workflow_dispatch' && github.actor || (github.event.comment && github.event.comment.user.login || 'unknown') }}*"
           gh api --method PATCH \
-            /repos/${{ github.repository }}/issues/comments/${{ steps.status_comment.outputs.comment_id }} \
+            /repos/${{ github.repository }}/issues/comments/${{ steps.ack_command.outputs.comment_id }} \
             -f body="$body"
         env:
           GH_TOKEN: ${{ github.token }}
-          REQUESTER: ${{ github.event_name == 'workflow_dispatch' && github.actor || (github.event.comment && github.event.comment.user.login || 'unknown') }}
-      - name: Update status comment with failure
-        if: failure() && steps.status_comment.outputs.comment_id
+      - name: Update comment with failure
+        if: failure()
         run: |
           body="❌ Failed to execute command ${{ steps.parse_command.outputs.command_name }} ${{ steps.parse_command.outputs.args }}
 
           Check the [workflow logs](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
 
-          *Requested by @${REQUESTER}*"
+          Requested by *${{ github.event_name == 'workflow_dispatch' && github.actor || (github.event.comment && github.event.comment.user.login || 'unknown') }}*"
           gh api --method PATCH \
-            /repos/${{ github.repository }}/issues/comments/${{ steps.status_comment.outputs.comment_id }} \
+            /repos/${{ github.repository }}/issues/comments/${{ steps.ack_command.outputs.comment_id }} \
             -f body="$body"
         env:
           GH_TOKEN: ${{ github.token }}
-          REQUESTER: ${{ github.event_name == 'workflow_dispatch' && github.actor || (github.event.comment && github.event.comment.user.login || 'unknown') }}
