@@ -20,6 +20,9 @@ permissions:
   pull-requests: write
   issues: write
 
+concurrency:
+  group: ${{ github.event.issue.number || github.event.inputs.pr_number }}
+
 jobs:
   main:
     if: |
